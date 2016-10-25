@@ -1,29 +1,40 @@
+import logging
+
+
 class TieBreaking(object):
     """
     TieBreaking determines which response should be used in the event
     that multiple responses are generated within a logic adapter.
     """
 
-    def break_tie(self, statement_list, method):
+    def break_tie(self, input_statement, statement_list, method):
 
         METHODS = {
-            "first_response": self.get_first_response,
-            "random_response": self.get_random_response,
-            "most_frequent_response": self.get_most_frequent_response
+            'first_response': self.get_first_response,
+            'random_response': self.get_random_response,
+            'most_frequent_response': self.get_most_frequent_response
         }
 
         if method in METHODS:
-            return METHODS[method](statement_list)
+            return METHODS[method](input_statement, statement_list)
 
         # Default to the first method if an invalid method is passed in
-        return METHODS["first_response"](statement_list)
+        raise self.InvalidTieBreakingMethodException(
+            '"{}" is not a known tie breaking method. Valid options are: {}'.format(
+                method,
+                ', '.join(METHODS)
+            )
+        )
 
     def get_most_frequent_response(self, input_statement, response_list):
         """
         Returns the statement with the greatest number of occurrences.
         """
+        logger = logging.getLogger(__name__)
         matching_response = None
         occurrence_count = -1
+
+        logger.info(u'Selecting response with greatest number of occurrences.')
 
         for statement in response_list:
             count = statement.get_response_count(input_statement)
@@ -36,15 +47,31 @@ class TieBreaking(object):
         # Choose the most commonly occuring matching response
         return matching_response
 
-    def get_first_response(self, response_list):
+    def get_first_response(self, input_statement, response_list):
         """
         Return the first statement in the response list.
         """
+        logger = logging.getLogger(__name__)
+        logger.info(u'Selecting first response from list of {} options.'.format(
+            len(response_list)
+        ))
         return response_list[0]
 
-    def get_random_response(self, response_list):
+    def get_random_response(self, input_statement, response_list):
         """
         Choose a random response from the selection.
         """
         from random import choice
+        logger = logging.getLogger(__name__)
+        logger.info(u'Selecting a response from list of {} options.'.format(
+            len(response_list)
+        ))
         return choice(response_list)
+
+    class InvalidTieBreakingMethodException(Exception):
+
+        def __init__(self, value='The tie breaking method provided was not valid.'):
+            self.value = value
+
+        def __str__(self):
+            return repr(self.value)

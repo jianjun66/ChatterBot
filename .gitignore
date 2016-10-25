@@ -3,8 +3,20 @@ build
 dist
 include
 lib
-database.db
-settings.py
+venv
 *.pyc
 *.swp
 *.egg-info
+
+# Database files
+*.sqlite3
+*.db
+
+# Sphinx docs
+docs/_build/
+
+# IntelliJ
+.idea
+*.iml
+
+examples/settings.py

@@ -1,49 +1,61 @@
-from .adapters.exceptions import UnknownAdapterTypeException
 from .adapters.storage import StorageAdapter
 from .adapters.logic import LogicAdapter, MultiLogicAdapter
-from .adapters.io import IOAdapter, MultiIOAdapter
+from .adapters.input import InputAdapter
+from .adapters.output import OutputAdapter
+from .conversation import Statement, Response
+from .utils.queues import ResponseQueue
 from .utils.module_loading import import_module
-from .conversation import Statement
+import logging
 
 
 class ChatBot(object):
 
     def __init__(self, name, **kwargs):
-        kwargs["name"] = name
+        self.name = name
+        kwargs['name'] = name
 
-        storage_adapter = kwargs.get("storage_adapter",
-            "chatterbot.adapters.storage.JsonDatabaseAdapter"
+        storage_adapter = kwargs.get('storage_adapter',
+            'chatterbot.adapters.storage.JsonFileStorageAdapter'
         )
 
-        logic_adapter = kwargs.get("logic_adapter",
-            "chatterbot.adapters.logic.ClosestMatchAdapter"
-        )
-
-        logic_adapters = kwargs.get("logic_adapters", [
-            logic_adapter
+        logic_adapters = kwargs.get('logic_adapters', [
+            'chatterbot.adapters.logic.ClosestMatchAdapter'
         ])
 
-        io_adapter = kwargs.get("io_adapter",
-            "chatterbot.adapters.io.TerminalAdapter"
+        input_adapter = kwargs.get('input_adapter',
+            'chatterbot.adapters.input.VariableInputTypeAdapter'
         )
 
-        io_adapters = kwargs.get("io_adapters", [
-            io_adapter
-        ])
+        output_adapter = kwargs.get('output_adapter',
+            'chatterbot.adapters.output.OutputFormatAdapter'
+        )
 
-        self.recent_statements = []
-        self.storage_adapters = []
+        # The last 10 statement inputs and outputs
+        self.recent_statements = ResponseQueue(maxsize=10)
 
+        # The storage adapter must be an instance of StorageAdapter
+        self.validate_adapter_class(storage_adapter, StorageAdapter)
+
+        # The input adapter must be an instance of InputAdapter
+        self.validate_adapter_class(input_adapter, InputAdapter)
+
+        # The output adapter must be an instance of OutputAdapter
+        self.validate_adapter_class(output_adapter, OutputAdapter)
+
+        StorageAdapterClass = import_module(storage_adapter)
+        InputAdapterClass = import_module(input_adapter)
+        OutputAdapterClass = import_module(output_adapter)
+
+        self.storage = StorageAdapterClass(**kwargs)
         self.logic = MultiLogicAdapter(**kwargs)
-        self.io = MultiIOAdapter(**kwargs)
+        self.input = InputAdapterClass(**kwargs)
+        self.output = OutputAdapterClass(**kwargs)
 
-        # Add required system adapter
-        self.add_adapter("chatterbot.adapters.logic.NoKnowledgeAdapter")
+        filters = kwargs.get('filters', tuple())
+        self.filters = (import_module(F)() for F in filters)
 
-        self.add_adapter(storage_adapter, **kwargs)
-
-        for adapter in io_adapters:
-            self.add_adapter(adapter, **kwargs)
+        # Add required system logic adapter
+        self.add_adapter('chatterbot.adapters.logic.NoKnowledgeAdapter')
 
         for adapter in logic_adapters:
             self.add_adapter(adapter, **kwargs)
@@ -52,77 +64,191 @@ class ChatBot(object):
         # or access to other adapters with each of the adapters
         self.storage.set_context(self)
         self.logic.set_context(self)
-        self.io.set_context(self)
+        self.input.set_context(self)
+        self.output.set_context(self)
 
-    @property
-    def storage(self):
-        return self.storage_adapters[0]
+        # Use specified trainer or fall back to the default
+        trainer = kwargs.get('trainer', 'chatterbot.trainers.Trainer')
+        TrainerClass = import_module(trainer)
+        self.trainer = TrainerClass(self.storage)
+
+        self.logger = kwargs.get('logger', logging.getLogger(__name__))
 
     def add_adapter(self, adapter, **kwargs):
-        NewAdapter = import_module(adapter)
+        self.validate_adapter_class(adapter, LogicAdapter)
 
+        NewAdapter = import_module(adapter)
+        adapter = NewAdapter(**kwargs)
+        self.logic.add_adapter(adapter)
+
+    def insert_logic_adapter(self, logic_adapter, insert_index, **kwargs):
+        """
+        Adds a logic adapter at a specified index.
+
+        :param logic_adapter: The string path to the logic adapter to add.
+        :type logic_adapter: class
+
+        :param insert_index: The index to insert the logic adapter into the list at.
+        :type insert_index: int
+
+        :raises: InvalidAdapterException
+        """
+        self.validate_adapter_class(logic_adapter, LogicAdapter)
+
+        NewAdapter = import_module(logic_adapter)
         adapter = NewAdapter(**kwargs)
 
-        if issubclass(NewAdapter, StorageAdapter):
-            self.storage_adapters.append(adapter)
-        elif issubclass(NewAdapter, LogicAdapter):
-            self.logic.add_adapter(adapter)
-        elif issubclass(NewAdapter, IOAdapter):
-            self.io.add_adapter(adapter)
-        else:
-            raise UnknownAdapterTypeException()
+        self.logic.adapters.insert(insert_index, adapter)
 
-    def get_last_statement(self):
+    def remove_logic_adapter(self, adapter_name):
         """
-        Return the last statement that was received.
+        Removes a logic adapter from the chat bot.
+
+        :param adapter_name: The class name of the adapter to remove.
+        :type adapter_name: str
         """
-        if self.recent_statements:
+        for index, adapter in enumerate(self.logic.adapters):
+            if adapter_name == type(adapter).__name__:
+                del(self.logic.adapters[index])
+                return True
+        return False
+
+    def validate_adapter_class(self, validate_class, adapter_class):
+        """
+        Raises an exception if validate_class is not a
+        subclass of adapter_class.
+
+        :param validate_class: The class to be validated.
+        :type validate_class: class
+
+        :param adapter_class: The class type to check against.
+        :type adapter_class: class
+
+        :raises: InvalidAdapterException
+        """
+        from .adapters import Adapter
+
+        if not issubclass(import_module(validate_class), Adapter):
+            raise self.InvalidAdapterException(
+                '{} must be a subclass of {}'.format(
+                    validate_class,
+                    Adapter.__name__
+                )
+            )
+
+        if not issubclass(import_module(validate_class), adapter_class):
+            raise self.InvalidAdapterException(
+                '{} must be a subclass of {}'.format(
+                    validate_class,
+                    adapter_class.__name__
+                )
+            )
+
+    def get_last_conversance(self):
+        """
+        Return the most recent input statement and response pair.
+        """
+        if not self.recent_statements.empty():
             return self.recent_statements[-1]
         return None
 
-    def get_input(self):
-        return self.io.process_input()
+    def get_last_response_statement(self):
+        """
+        Return the last statement that was received.
+        """
+        previous_interaction = self.get_last_conversance()
+        if previous_interaction:
+            # Return the output statement
+            return previous_interaction[1]
+        return None
 
-    def get_response(self, input_text):
+    def get_last_input_statement(self):
+        """
+        Return the last response that was given.
+        """
+        previous_interaction = self.get_last_conversance()
+        if previous_interaction:
+            # Return the input statement
+            return previous_interaction[0]
+        return None
+
+    def get_response(self, input_item):
         """
         Return the bot's response based on the input.
-        """
-        input_statement = Statement(input_text)
 
-        # Select a response to the input statement
-        confidence, response = self.logic.process(input_statement)
+        :param input_item: An input value.
+        :returns: Statement -- the response to the input.
+        """
+        input_statement = self.input.process_input(input_item)
+        self.logger.info(u'Recieved input statement: {}'.format(input_statement.text))
+
+        self.storage.generate_base_query(self)
 
         existing_statement = self.storage.find(input_statement.text)
 
         if existing_statement:
+            self.logger.info(u'"{}" is a known statement'.format(input_statement.text))
+            if input_statement.extra_data:
+                existing_statement.extra_data.update(input_statement.extra_data)
             input_statement = existing_statement
+        else:
+            self.logger.info(u'"{}" is not a known statement'.format(input_statement.text))
 
-        previous_statement = self.get_last_statement()
+        # Select a response to the input statement
+        confidence, response = self.logic.process(input_statement)
+        self.logger.info(u'Selecting "{}" as response with a confidence of {}'.format(response.text, confidence))
+
+        if input_statement.extra_data:
+            response.extra_data.update(input_statement.extra_data)
+
+        previous_statement = self.get_last_response_statement()
 
         if previous_statement:
-            input_statement.add_response(previous_statement)
+            input_statement.add_response(
+                Response(previous_statement.text)
+            )
+            self.logger.info(u'Adding the previous statement "{}" as response to "{}"'.format(
+                previous_statement.text,
+                input_statement.text
+            ))
 
         # Update the database after selecting a response
         self.storage.update(input_statement)
 
-        self.recent_statements.append(response)
+        self.recent_statements.append(
+            (input_statement, response, )
+        )
 
-        # Process the response output with the IO adapter
-        return self.io.process_response(response)
+        # Process the response output with the output adapter
+        return self.output.process_response(response, confidence)
 
-    def train(self, conversation=None, *args, **kwargs):
+    def set_trainer(self, training_class, **kwargs):
         """
-        Train the chatbot based on input data.
+        Set the module used to train the chatbot.
         """
-        from .training import Trainer
+        self.trainer = training_class(self.storage, **kwargs)
 
-        trainer = Trainer(self.storage)
+    @property
+    def train(self):
+        """
+        Proxy method to the chat bot's trainer class.
+        """
+        return self.trainer.train
 
-        if isinstance(conversation, str):
-            corpora = list(args)
-            corpora.append(conversation)
+    @classmethod
+    def from_config(self, config_file_path):
+        import json
+        with open(config_file_path, 'r') as config_file:
+            data = json.load(config_file)
 
-            if corpora:
-                trainer.train_from_corpora(corpora)
-        else:
-            trainer.train_from_list(conversation)
+        name = data.pop('name')
+
+        return ChatBot(name, **data)
+
+    class InvalidAdapterException(Exception):
+
+        def __init__(self, value='Recieved an unexpected adapter setting.'):
+            self.value = value
+
+        def __str__(self):
+            return repr(self.value)

@@ -7,7 +7,9 @@ de conversação construído em Python o que possibilita a geração de resposta
 baseada em coleções de conversas conhecidas. A arquitetura do ChatterBot
 é independente da língua, desta forma é possível treiná-lo em qualquer língua.
 
-*Leia em outras línguas: [English](readme.md)*
+*[Read in English](readme.md)*
+*[Leia em Português](readme.pt.md)*
+*[Leer en español](readme.es.md)*
 
 [![Package Version](https://img.shields.io/pypi/v/chatterbot.svg)](https://pypi.python.org/pypi/chatterbot/)
 [![Requirements Status](https://requires.io/github/gunthercox/ChatterBot/requirements.svg?branch=master)](https://requires.io/github/gunthercox/ChatterBot/requirements/?branch=master)
@@ -24,7 +26,7 @@ Um exemplo típico de entrada, será algo parecido com isso:
 
 ## Como funciona
 
-Uma instância não treinada do ChatterBot começão sem conhecimento de como se comunicar. Cada vez que o usuário entra com uma afirmação, a bibliote salve o texto que foi inserido e o texto em que a afirmação foi respondida. Conforme o ChatterBot recebe mais entradas o número de respostas que ele pode responder e a precisão de suas respostas em relação a afirmação de entrada cresce. O programa seleciona a resposta mais precisa procurando pela resposta mais próxima que combina com a afirmação de entrada, ele então retorna a resposta mais provável para a afirmação baseada na frequência que esta resposta é emitida pelao usuário que esta se comunicando com o robô.
+Uma instância não treinada do ChatterBot começão sem conhecimento de como se comunicar. Cada vez que o usuário entra com uma afirmação, a biblioteca salva o texto que foi inserido e o texto em que a afirmação foi respondida. Conforme o ChatterBot recebe mais entradas o número de respostas que ele pode responder e a precisão de suas respostas em relação a afirmação de entrada cresce. O programa seleciona a resposta mais precisa procurando pela resposta mais próxima que combina com a afirmação de entrada, ele então retorna a resposta mais provável para a afirmação baseada na frequência que esta resposta é emitida pelo usuário que esta se comunicando com o robô.
 
 ## Instalação
 
@@ -50,7 +52,7 @@ chatbot.get_response("Olá, como você esta hoje?")
 # Treinando os dados
 
 ChatterBot vem com um módulo utilitário de dados que pode ser usado para treinar os robôs de chat.
-Neste momento existem dados de treinamento em Inglês e Português neste módulo. Contribuições de dados de treinamento adicionais
+Neste momento existem dados de treinamento em Inglês, Espanhol e Português neste módulo. Contribuições de dados de treinamento adicionais
 ou dados de treinamento em outras linguagem será muito bem vinda. Dê uma olhada nos arquivos de dados em [chatterbot/corpus](https://github.com/gunthercox/ChatterBot/tree/master/chatterbot/corpus)
 se você estiver interesse em contribuir.
 
@@ -59,37 +61,32 @@ se você estiver interesse em contribuir.
 chatbot.train("chatterbot.corpus.Portuguese")
 
 # Treino baseado no corpus de saudações em Português
-chatbot.train("chatterbot.corpus.Portuguese.greetings_pt-BT")
+chatbot.train("chatterbot.corpus.Portuguese.greetings_pt-BR")
 
 # Train based on the english conversations corpus
 # Treino baseado no corpus de conversação em Português
 chatbot.train("chatterbot.corpus.Portuguese.conversations_pt-BR")
 ```
 
-**Corpus contributions are welcome! Please make a pull request.**
 **Contribuições ao Corpus são bem-vindas! Por favor faça uma pull request.** 
 
 # Documentação
 
-Veja a [documentação](https://github.com/gunthercox/ChatterBot/wiki/)
-para usar o ChatterBot na wiki do projeto.
+Veja a [documentação](http://chatterbot.readthedocs.io/)
+para ChatterBot em Read the Docs.
 
 # Exemplos
 
 Para consultar exemplos, veja o diretório de [exemplos](https://github.com/gunthercox/ChatterBot/tree/master/examples) no repositório
 deste projeto.
 
-There is also an example [Django project using ChatterBot](https://github.com/gunthercox/django_chatterbot).
-Também existe exemplos em [Projeto Django usando o ChatterBot](https://github.com/gunthercox/django_chatterbot).
-
-Criou algo legal usando o ChatterBot?
-Por favor adicione a sua criação na [lista de projetos](https://github.com/gunthercox/ChatterBot/wiki/ChatterBot-Showcase) usando o ChatterBot na Wiki.
+Também existem exemplos em [Projeto Django usando o ChatterBot](https://github.com/gunthercox/django_chatterbot), e [Projeto Flask usando o ChatterBot](https://github.com/chamkank/flask-chatterbot).
 
 # Testando
 
 Os testes nativos do ChatterBot podem ser executados usando nose.
 
-Veja a [documentação do nose](https://nose.readthedocs.org/en/latest/) para mais informações.
+Veja a [documentação do nose](https://nose.readthedocs.org/) para mais informações.
 
 # História
 

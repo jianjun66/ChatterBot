@@ -1,51 +1,46 @@
-from chatterbot.adapters.exceptions import EmptyDatasetException
+# -*- coding: utf-8 -*-
+from fuzzywuzzy import fuzz
 from .base_match import BaseMatchAdapter
-from fuzzywuzzy import process
 
 
 class ClosestMatchAdapter(BaseMatchAdapter):
     """
-    The ClosestMatchAdapter creates a response by
-    using fuzzywuzzy's process class to extract the most similar
-    response to the input. This adapter selects a response to an
-    input statement by selecting the closest known matching
-    statement based on the Levenshtein Distance between the text
+    The ClosestMatchAdapter logic adapter selects a known response
+    to an input by searching for a known statement that most closely
+    matches the input based on the Levenshtein Distance between the text
     of each statement.
     """
 
-    def get(self, input_statement, statement_list=None):
+    def get(self, input_statement):
         """
         Takes a statement string and a list of statement strings.
         Returns the closest matching statement from the list.
         """
-        statement_list = self.get_available_statements(statement_list)
+        statement_list = self.context.storage.get_response_statements()
 
         if not statement_list:
             if self.has_storage_context:
                 # Use a randomly picked statement
+                self.logger.info(
+                    u'No statements have known responses. ' +
+                    u'Choosing a random response to return.'
+                )
                 return 0, self.context.storage.get_random()
             else:
-                raise EmptyDatasetException
+                raise self.EmptyDatasetException()
 
-        # Get the text of each statement
-        text_of_all_statements = []
+        closest_match = input_statement
+        closest_similarity = -1
+
+        # Find the closest matching known statement
         for statement in statement_list:
-            text_of_all_statements.append(statement.text)
+            similarity = self.compare_statements(input_statement, statement)
 
-        # Check if an exact match exists
-        if input_statement.text in text_of_all_statements:
-            return 1, input_statement
-
-        # Get the closest matching statement from the database
-        closest_match, confidence = process.extract(
-            input_statement.text,
-            text_of_all_statements,
-            limit=1
-        )[0]
+            if similarity > closest_similarity:
+                closest_similarity = similarity
+                closest_match = statement
 
         # Convert the confidence integer to a percent
-        confidence /= 100.0
+        confidence = closest_similarity / 100.0
 
-        return confidence, next(
-            (s for s in statement_list if s.text == closest_match), None
-        )
+        return confidence, closest_match

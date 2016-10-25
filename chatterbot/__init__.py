@@ -1,5 +1,10 @@
-from .chatterbot import ChatBot
+import os
+import sys
 
-__version__ = "0.3.7"
-__author__ = "Gunther Cox"
-__email__ = "gunthercx@gmail.com"
+if 'install' not in sys.argv and 'egg_info' not in sys.argv:
+    from .chatterbot import ChatBot
+
+__version__ = '0.4.11'
+__author__ = 'Gunther Cox'
+__email__ = 'gunthercx@gmail.com'
+

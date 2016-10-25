@@ -23,13 +23,17 @@ setup(
     author_email=author_email,
     packages=[
         'chatterbot',
-        'chatterbot.utils',
         'chatterbot.adapters',
+        'chatterbot.adapters.input',
+        'chatterbot.adapters.output',
+        'chatterbot.adapters.storage',
+        'chatterbot.adapters.logic',
         'chatterbot.corpus',
         'chatterbot.conversation',
-        'chatterbot.adapters.io',
-        'chatterbot.adapters.storage',
-        'chatterbot.adapters.logic'
+        'chatterbot.ext',
+        'chatterbot.ext.django_chatterbot',
+        'chatterbot.ext.django_chatterbot.migrations',
+        'chatterbot.utils'
     ],
     package_dir={'chatterbot': 'chatterbot'},
     include_package_data=True,

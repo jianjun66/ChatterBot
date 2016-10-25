@@ -7,11 +7,17 @@ Python which makes it possible to generate responses based on collections of
 known conversations. The language independent design of ChatterBot allows it
 to be trained to speak any language.
 
+*[Read in English](readme.md)*
+*[Leia em Português](readme.pt.md)*
+*[Leer en español](readme.es.md)*
+
 [![Package Version](https://img.shields.io/pypi/v/chatterbot.svg)](https://pypi.python.org/pypi/chatterbot/)
 [![Requirements Status](https://requires.io/github/gunthercox/ChatterBot/requirements.svg?branch=master)](https://requires.io/github/gunthercox/ChatterBot/requirements/?branch=master)
 [![Build Status](https://travis-ci.org/gunthercox/ChatterBot.svg?branch=master)](https://travis-ci.org/gunthercox/ChatterBot)
+[![Documentation Status](https://readthedocs.org/projects/chatterbot/badge/?version=stable)](http://chatterbot.readthedocs.io/en/stable/?badge=stable)
 [![Coverage Status](https://img.shields.io/coveralls/gunthercox/ChatterBot.svg)](https://coveralls.io/r/gunthercox/ChatterBot)
 [![Code Climate](https://codeclimate.com/github/gunthercox/ChatterBot/badges/gpa.svg)](https://codeclimate.com/github/gunthercox/ChatterBot)
+[![Join the chat at https://gitter.im/chatter_bot/Lobby](https://badges.gitter.im/chatter_bot/Lobby.svg)](https://gitter.im/chatter_bot/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 An example of typical input would be something like this:
 
@@ -36,7 +42,11 @@ pip install chatterbot
 
 ```
 from chatterbot import ChatBot
-chatbot = ChatBot("Ron Obvious")
+
+chatbot = ChatBot(
+    'Ron Obvious',
+    trainer='chatterbot.trainers.ChatterBotCorpusTrainer'
+)
 
 # Train based on the english corpus
 chatbot.train("chatterbot.corpus.english")
@@ -48,7 +58,7 @@ chatbot.get_response("Hello, how are you today?")
 # Training data
 
 Chatterbot comes with a data utility module that can be used to train chat bots.
-At the moment there is two languages, English and Portuguese training data in this module. Contributions
+At the moment there is three languages, English, Spanish and Portuguese training data in this module. Contributions
 of additional training data or training data in other languages would be greatly
 appreciated. Take a look at the data files in the
 [chatterbot/corpus](https://github.com/gunthercox/ChatterBot/tree/master/chatterbot/corpus)
@@ -67,26 +77,23 @@ chatbot.train("chatterbot.corpus.english.conversations")
 
 **Corpus contributions are welcome! Please make a pull request.**
 
-# Documentation
+# [Documentation](http://chatterbot.readthedocs.io/)
 
-View the [documentation](https://github.com/gunthercox/ChatterBot/wiki/)
-for using ChatterBot in the project wiki.
+View the [documentation](http://chatterbot.readthedocs.io/)
+for ChatterBot on Read the Docs.
+
+To build the documentation yourself using [Sphinx](http://www.sphinx-doc.org/), run:
+
+```
+sphinx-build -b html docs/ build/
+```
 
 # Examples
 
 For examples, see the [examples](https://github.com/gunthercox/ChatterBot/tree/master/examples)
-directory in this project's repository.
+directory in this project's git repository.
 
-There is also an example [Django project using ChatterBot](https://github.com/gunthercox/django_chatterbot).
-
-Have you created something cool using ChatterBot?  
-Please add your creation to the [list of projects](https://github.com/gunthercox/ChatterBot/wiki/ChatterBot-Showcase) using ChatterBot in the wiki.
-
-# Testing
-
-ChatterBot's built in tests can be run using nose.
-
-See the [nose documentation](https://nose.readthedocs.org/en/latest/) for more information.
+There is also an example [Django project using ChatterBot](https://github.com/gunthercox/django_chatterbot), as well as an example [Flask project using ChatterBot](https://github.com/chamkank/flask-chatterbot).
 
 # History
 

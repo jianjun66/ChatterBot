@@ -1,4 +1,4 @@
-from .logic import LogicAdapter
+from .logic_adapter import LogicAdapter
 
 
 class MultiLogicAdapter(LogicAdapter):
@@ -18,6 +18,8 @@ class MultiLogicAdapter(LogicAdapter):
         """
         Returns the outout of a selection of logic adapters
         for a given input statement.
+
+        :param statement: The input statement to be processed.
         """
         result = None
         max_confidence = -1
@@ -25,13 +27,32 @@ class MultiLogicAdapter(LogicAdapter):
         for adapter in self.adapters:
             if adapter.can_process(statement):
                 confidence, output = adapter.process(statement)
+
+                self.logger.info(
+                    u'{} selected "{}" as a response with a confidence of {}'.format(
+                         str(adapter.__class__), output.text, confidence
+                    )
+                )
+
                 if confidence > max_confidence:
                     result = output
                     max_confidence = confidence
+            else:
+                self.logger.info(
+                    u'Not processing the statement using {}'.format(
+                        str(adapter.__class__)
+                    )
+                )
 
         return max_confidence, result
 
     def add_adapter(self, adapter):
+        """
+        Appends a logic adapter to the list of logic adapters being used.
+
+        :param adapter: The logic adapter to be added.
+        :type adapter: LogicAdapter
+        """
         self.adapters.append(adapter)
 
     def set_context(self, context):
