@@ -5,6 +5,11 @@ Quick Start Guide
 Create a new chat bot
 =====================
 
+.. note::
+
+   If you are using Python 2.7, be sure that the unicode header is the first line of
+   your Python file: :code:`# -*- coding: utf-8 -*-`
+
 .. code-block:: python
 
    from chatterbot import ChatBot
@@ -13,7 +18,7 @@ Create a new chat bot
 .. note::
 
    The only required parameter for the `ChatBot` is a name.
-   This can be any anything you want.
+   This can be anything you want.
 
 Training
 ========

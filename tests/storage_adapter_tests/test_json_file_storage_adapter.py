@@ -1,5 +1,5 @@
 from unittest import TestCase
-from chatterbot.adapters.storage import JsonFileStorageAdapter
+from chatterbot.storage import JsonFileStorageAdapter
 from chatterbot.conversation import Statement, Response
 
 
@@ -250,7 +250,7 @@ class JsonFileStorageAdapterFilterTestCase(JsonAdapterTestCase):
         self.adapter.update(self.statement1)
 
         results = self.adapter.filter(
-            in_response_to=[Response("Maybe")]
+            in_response_to="Maybe"
         )
         self.assertEqual(len(results), 0)
 
@@ -361,6 +361,49 @@ class JsonFileStorageAdapterFilterTestCase(JsonAdapterTestCase):
 
         self.assertEqual(len(found[0].in_response_to), 1)
         self.assertEqual(type(found[0].in_response_to[0]), Response)
+
+
+class JsonFileStorageOrderingTestCase(JsonAdapterTestCase):
+    """
+    Test cases for the ordering of sets of statements.
+    """
+
+    def test_order_by_text(self):
+        statement_a = Statement(text='A is the first letter of the alphabet.')
+        statement_b = Statement(text='B is the second letter of the alphabet.')
+
+        self.adapter.update(statement_a)
+        self.adapter.update(statement_b)
+
+        results = self.adapter.filter(order_by='text')
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0], statement_a)
+        self.assertEqual(results[1], statement_b)
+
+    def test_order_by_created_at(self):
+        from datetime import datetime, timedelta
+
+        today = datetime.now()
+        yesterday = datetime.now() - timedelta(days=1)
+
+        statement_a = Statement(
+            text='A is the first letter of the alphabet.',
+            created_at=today
+        )
+        statement_b = Statement(
+            text='B is the second letter of the alphabet.',
+            created_at=yesterday
+        )
+
+        self.adapter.update(statement_a)
+        self.adapter.update(statement_b)
+
+        results = self.adapter.filter(order_by='created_at')
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0], statement_a)
+        self.assertEqual(results[1], statement_b)
 
 
 class ReadOnlyJsonFileStorageAdapterTestCase(JsonAdapterTestCase):
